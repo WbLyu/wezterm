@@ -1,0 +1,11 @@
+# Lua 包管理
+/luarocks.bat
+/lua.bat
+/lua_modules
+/.luarocks
+
+# 本机 SSH/WSL 域配置（使用 domains.lua.example 作为模板）
+/config/domains.lua
+
+# 本机默认终端覆盖（使用 local.lua.example 作为模板）
+/config/local.lua

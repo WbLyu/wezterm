@@ -1,0 +1,349 @@
+# WezTerm 配置
+
+<div align="center">
+  <img src="https://raw.githubusercontent.com/wezterm/wezterm/main/assets/icon/wezterm-icon.svg" width="110" height="100" />
+</div>
+
+<p align="center">
+基于 Rust 的 GPU 加速跨平台终端 · WebGPU 渲染 · 60 FPS
+</p>
+
+## 核心特性
+
+**外观**
+
+- 🎨 Catppuccin Mocha 配色 + 动态背景切换
+- 📊 双侧状态栏（时间/电池/Leader 模式指示）
+- 🖼️ 半透明背景（96% 不透明度）+ 集成标题栏
+
+**交互**
+
+- ⌨️ 完全自定义快捷键（禁用默认，从零构建）
+- 🎯 Leader 键模式（字体/窗格调整）
+- 🔗 智能 URL 提取（支持多种括号格式）
+- 🚀 F6 快捷命令菜单（代理/更新）
+
+**架构**
+
+- 🔧 模块化配置（config/events/utils 分离）
+- 🌐 跨平台适配（Windows/macOS/Linux）
+- 🐧 WSL/SSH 域集成
+- ✨ 启动自动最大化窗口
+
+## 快速开始
+
+### 安装
+
+#### 1. 安装 WezTerm
+
+从 [GitHub Releases](https://github.com/wezterm/wezterm/releases) 下载安装包。
+
+#### 2. 安装字体
+
+本配置使用以下字体，缺失会导致 Nerd Font 图标乱码、中文渲染异常：
+
+| 字体 | 用途 | 安装方式 |
+| ------ | ------ | --------- |
+| **Maple Mono NF CN** | 主字体，编程连字 + Nerd Font 图标 + 中文优化 | `scoop bucket add nerd-fonts && scoop install Maple-Mono-NF-CN` |
+| **鸿蒙黑体** | 备用中文字体 | [华为开发者官网](https://developer.huawei.com/consumer/cn/design/resource-V1/) 下载安装 |
+
+> Maple Mono 的 harfbuzz 特性（`cv01-cv99`、`ss01-ss05` 等）详见 `config/fonts.lua`，完整文档见 [Maple Font 仓库](https://github.com/subframe7536/maple-font)。
+
+#### 3. 部署配置
+
+```bash
+# Windows
+git clone <your-repo> %USERPROFILE%\.config\wezterm
+
+# Linux/macOS
+git clone <your-repo> ~/.config/wezterm
+```
+
+### 首次配置
+
+ **F3 启动器（Windows）**
+
+按 `F3` 可打开启动器，选择不同 Shell 或 WSL 域：
+
+- **Windows PowerShell 5.1** - Windows 默认 Shell，兼容性最佳
+- **PowerShell 7** - 已安装时可从菜单选择，适用于现代模块与跨平台脚本
+- **Git Bash** - 安装并加入 PATH 后显示，推荐用于包管理工具（npm/pip/opencode 等）
+- **CMD** - 传统命令提示符
+- **WSL 域** - 在 `config/domains.lua` 中自行配置
+
+> 提示：启动时不会探测外部命令，因此不会产生闪窗。PowerShell 7、Git Bash 等可选项始终显示；未安装或未加入 PATH 时，点选该项会失败。`config/domains.lua` 需从 `domains.lua.example` 复制后自行填写，该文件不会被 Git 追踪（见 `.gitignore`）。
+
+ **修改 WSL 配置**（如果使用 WSL）
+
+从模板复制并编辑：
+
+```bash
+cp config/domains.lua.example config/domains.lua
+vim config/domains.lua
+```
+
+```lua
+wsl_domains = {
+   {
+      name = 'WSL:Ubuntu-XX.XX',
+      distribution = 'Ubuntu-XX.XX',  -- 你的 WSL 发行版名称（wsl -l -v 查看）
+      username = 'your-username',
+      default_cwd = '/home/your-username',
+      default_prog = { 'bash', '-l' },
+   },
+},
+```
+
+> `config/domains.lua` 被 `.gitignore` 排除，不会被 git 追踪，换机器需重新创建。
+
+**添加 SSH 连接**（可选）
+
+在 `config/domains.lua` 中添加（如未创建先从 `domains.lua.example` 复制）：
+
+```lua
+ssh_domains = {
+   {
+      name = 'MyServer',
+      remote_address = '192.168.1.100',
+      username = 'root',
+   },
+},
+```
+
+**自定义背景**
+
+将图片放入 `backdrops/` 目录（支持 jpg/png/gif），建议：
+
+- 数量：10-30 张
+- 单张大小：1-2MB
+- 总大小：20MB 以内
+
+## 配置结构
+
+```
+wezterm/
+├── wezterm.lua          # 主入口（加载所有模块）
+├── config/              # 配置模块
+│   ├── init.lua            # Config 类（合并配置）
+│   ├── appearance.lua      # 外观（WebGPU/配色/背景/标签栏）
+│   ├── bindings.lua        # 快捷键（完全自定义）
+│   ├── domains.lua.example # WSL/SSH/Unix 域模板
+│   ├── local.lua.example   # 本机默认终端覆盖模板
+│   ├── fonts.lua           # 字体（Maple Mono NF CN + 鸿蒙黑体）
+│   ├── general.lua         # 通用（滚动/超链接/行为）
+│   └── launch.lua          # 启动（默认 shell/启动菜单）
+├── events/              # 事件处理
+│   ├── left-status.lua     # 左状态栏（Leader/KeyTable 指示）
+│   ├── right-status.lua    # 右状态栏（时间/电池）
+│   ├── tab-title.lua       # 标签页标题
+│   └── new-tab-button.lua  # 新标签按钮
+├── utils/               # 工具函数
+│   ├── backdrops.lua       # 背景管理（切换/随机）
+│   ├── platform.lua        # 平台检测
+│   ├── gpu_adapter.lua     # GPU 适配器选择
+│   └── math.lua            # 数学工具
+├── colors/
+│   └── custom.lua          # Catppuccin Mocha 配色
+├── backdrops/           # 背景图片目录
+├── KEYBINDINGS.md       # 快捷键文档
+├── README.md            # 项目说明
+├── LICENSE              # 许可证
+└── .gitignore           # Git 忽略规则
+```
+
+> `config/domains.lua` 和 `config/local.lua` 是本机私有配置，已由 `.gitignore` 排除；请分别从对应的 `.example` 文件创建。
+
+## 快捷键
+
+> 完整快捷键说明：[KEYBINDINGS.md](./KEYBINDINGS.md)
+
+### 核心快捷键
+
+| 类别       | 快捷键             | 功能                  |
+| ---------- | ------------------ | --------------------- |
+| **功能键** | `F2`               | 命令面板              |
+|            | `F3`               | 启动器（WSL/SSH）     |
+|            | `F6`               | 快捷命令（代理/Claude 更新） |
+| **标签页** | `Alt+Enter`        | 新建标签页            |
+|            | `Alt+W`            | 关闭标签页            |
+|            | `Alt+H/L`          | 切换标签页            |
+| **窗格**   | `Alt+\`            | 垂直分割              |
+|            | `Alt+Ctrl+\`       | 水平分割              |
+|            | `Alt+Ctrl+X`       | 关闭当前窗格          |
+|            | `Alt+Z`            | 最大化/还原窗格       |
+|            | `Alt+Ctrl+H/J/K/L` | Vim 风格导航          |
+| **背景**   | `Alt+/`            | 随机切换              |
+|            | `Alt+,` / `Alt+.`  | 上一张/下一张         |
+| **其他**   | `Alt+U`            | 智能提取 URL          |
+|            | `Alt+F`            | 搜索                  |
+
+### Leader 键模式
+
+按 `Alt+Ctrl+Space` 激活 Leader 模式：
+
+- `Leader + F` → 字体调整模式（K/J 放大缩小，R 重置）
+- `Leader + P` → 窗格调整模式（H/J/K/L 调整大小）
+
+### F6 快捷命令
+
+- **Set Proxy (Windows)** - 为当前 PowerShell 会话设置临时代理（含大小写变量与 `NO_PROXY`）。
+- **Set Proxy (Linux)** - 为当前 Bash/Zsh 会话设置临时代理（含大小写变量与 `NO_PROXY`）。
+- **Agent Update** - 执行 `claude update` 更新 Claude Code；其他 AI CLI 请按各自官方方式更新。
+
+## 使用技巧
+
+### 域（Domains）使用
+
+ **访问 WSL**
+
+- 按 `F3` → 选择你配置的 WSL 域（如 `WSL:Ubuntu-24.04`）
+- 或在启动菜单中选择
+
+**连接 SSH**
+
+- 配置 `config/domains.lua` 后
+- 按 `F3` → 选择你的 SSH 服务器
+- 自动保持连接，像本地标签页一样使用
+
+ **自动启动到 WSL**
+
+在 `config/domains.lua` 中取消注释并修改为你的 WSL 域：
+
+```lua
+default_gui_startup_args = { 'connect', 'WSL:Ubuntu-XX.XX' },
+```
+
+### 背景管理
+
+- `Alt+/` - 随机切换（适合每天换心情）
+- `Alt+Ctrl+/` - 打开选择器（模糊搜索）
+- `Alt+,` / `Alt+.` - 顺序切换
+
+### 多任务工作流
+
+**场景 1：开发 + 监控**
+
+1. `Alt+\` 垂直分割
+2. 上方运行开发服务器
+3. 下方查看日志
+
+**场景 2：多项目切换**
+
+1. 每个项目一个标签页
+2. `F4` 模糊搜索快速跳转
+3. `Alt+H/L` 顺序切换
+
+## 自定义配置
+
+### 修改字体
+
+编辑 `config/fonts.lua`：
+
+```lua
+font = wezterm.font_with_fallback({
+   'Your Font',
+   'Fallback Font',
+}),
+font_size = 12,
+```
+
+**配置 Maple Mono 字体特性**
+
+Maple Mono 提供丰富的字符变体和连字选项，通过 `harfbuzz_features` 控制：
+
+```lua
+harfbuzz_features = {
+   -- 字符变体 (cv01-cv11, cv61-cv66)：美化单个字符渲染
+   'cv01',   -- 移除间隙
+   'cv02',   -- 替换 a
+   'cv03',   -- 替换 i
+   'cv05',   -- 替换 g
+   'cv64',   -- 替换左右箭头
+
+   -- 斜体变体 (cv31-cv44)：美化斜体字符渲染
+   'cv31',   -- 替换斜体 a
+   'cv38',   -- 替换斜体 g
+
+   -- 中文全角标点 (cv96-cv99)
+   'cv96',   -- 全角引号
+   'cv97',   -- 全角省略号
+   'cv98',   -- 全角破折号
+   'cv99',   -- 繁体标点
+
+   -- 样式集 (ss01-ss11)：预定义的美化风格组合
+   'ss01',   -- 分离的等号连字
+   'ss02',   -- 分离的比较符号连字
+   'ss03',   -- 任意的纯文本标签
+   'ss04',   -- 分离的多下划线连字
+   'ss05',   -- 回退细的转义符号
+
+   -- 其他
+   'zero',   -- 点 0（slashed zero）
+},
+```
+
+> 更多 Maple 特性参见 [Maple Font 文档](https://github.com/subframe7536/maple-font/blob/main/source/features.md)。
+
+### 修改配色
+
+编辑 `colors/custom.lua` 或使用内置主题：
+
+```lua
+-- config/appearance.lua
+color_scheme = 'Catppuccin Mocha',  -- 或其他主题
+```
+
+### 修改快捷键
+
+编辑 `config/bindings.lua`，注意跨平台适配：
+
+- Windows/Linux: `mod.SUPER` = `ALT`
+- macOS: `mod.SUPER` = `SUPER` (Cmd)
+
+### 设置本机默认终端
+
+默认配置优先保证跨设备可用。若你希望本机默认启动 PowerShell 7、Git Bash 或其他终端，复制模板并编辑本机文件：
+
+```powershell
+Copy-Item config/local.lua.example config/local.lua
+```
+
+例如将默认终端设为 PowerShell 7：
+
+```lua
+-- config/local.lua
+return {
+   default_prog = { 'pwsh' },
+}
+```
+
+`config/local.lua` 已被 Git 忽略，不会提交个人偏好或本机路径。若目标程序未安装或未加入 PATH，WezTerm 会显示启动失败；此时删除该文件或改回可用命令即可。
+
+### 修改 Shell 配置
+
+编辑 `config/launch.lua` 调整启动菜单：
+
+```lua
+-- Windows 平台配置示例
+if platform.is_win then
+   options.launch_menu = {
+      { label = 'PowerShell 7（已安装时可用）', args = { 'pwsh' } },
+      { label = 'Windows PowerShell 5.1（兼容模式）', args = { 'powershell' } },
+      { label = 'Git Bash（已安装并加入 PATH 时可用）', args = { 'bash', '-l' } },
+      { label = 'CMD', args = { 'cmd' } },
+   }
+end
+```
+
+> 启动菜单不会在启动时探测 shell，避免出现控制台闪窗；标注“已安装时可用”的项目需自行安装并加入 PATH。
+
+## 致谢
+
+参考项目：
+
+- [KevinSilvester/wezterm-config](https://github.com/KevinSilvester/wezterm-config)
+- [vivy89/wezterm-config](https://github.com/vivy89/wezterm-config)
+
+## 许可证
+
+MIT License

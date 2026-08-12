@@ -1,0 +1,11 @@
+-- 此文件仅作为示例。复制为 local.lua 后，内容会覆盖默认终端配置；local.lua 不会被 Git 跟踪。
+return {
+   -- PowerShell 7：
+   -- default_prog = { 'pwsh' },
+
+   -- Git Bash：
+   -- default_prog = { 'bash', '-l' },
+
+   -- Windows PowerShell 5.1：
+   -- default_prog = { 'powershell' },
+}
